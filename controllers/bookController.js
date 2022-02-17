@@ -1,5 +1,3 @@
-
-
 const bookController = Book => {
     const getBooks = (async (req, res) => {
         const response = await Book.find();
@@ -21,7 +19,8 @@ const bookController = Book => {
         const { query } = req;
         const book = await Book.find(query);
             
-        response = {message: "Found Book", book};
+        if(Object.keys(book).length === 0) response = {message: "Not found Book"}
+        else response = {message: "Found Book", book};
        
         res.json(response)
     });

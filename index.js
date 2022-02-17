@@ -16,7 +16,7 @@ app.all('/api/*', jwt({
     secret: 'aaa',
     algorithms: ['HS256'],
 }).unless({
-    path: ['/api/persons/login']
+    path: ['/api/persons/login', '/api/persons/login/validate']
 })
 )
 

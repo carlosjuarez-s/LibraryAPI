@@ -23,12 +23,11 @@ const personController = Person => {
     const getPerson = (async (req, res) => {
         var response;
 
-    
         const { query } = req;
         const person = await Person.find(query);
 
-        response = {message: 'Found Person', person};
-
+        if(Object.keys(person).length === 0) response = {message: 'Person not found'}
+        else response = {message: 'Found Person', person};
 
         res.json(response);
     })
