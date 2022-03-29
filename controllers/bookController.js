@@ -1,5 +1,7 @@
 const bookController = Book => {
     const getBooks = (async (req, res) => {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Credentials", "true");
         const response = await Book.find();
 
         res.json(response);

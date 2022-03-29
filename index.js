@@ -3,15 +3,17 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const Book = require('./models/bookModel');
 const Person = require('./models/personModel');
+const cors = require('cors');
 
 const app = express();
 const bookRouter = require('./routers/bookRouter')(Book);
 const personRouter = require('./routers/personRouter')(Person);
     
-mongoose.connect('mongodb://127.0.0.1:27017/bibliotecaDB')
+mongoose.connect('mongodb://127.0.0.1:27017/aspirineApp')
 
 const jwt = require('express-jwt');
 
+/*
 app.all('/api/*', jwt({
     secret: 'aaa',
     algorithms: ['HS256'],
@@ -19,7 +21,9 @@ app.all('/api/*', jwt({
     path: ['/api/persons/login', '/api/persons/login/validate']
 })
 )
+*/
 
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 

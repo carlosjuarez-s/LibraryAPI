@@ -33,7 +33,7 @@ const personController = Person => {
     })
 
     const putPerson = (async (req, res) => {
-        const { body } = req;
+        const { body, query } = req;
         const person = await Person.updateOne(
             {
                 _id: req.params.personId
@@ -42,7 +42,7 @@ const personController = Person => {
                 $set: {
                     firstName: body.firstName,
                     lastName: body.lastName,
-                    userName: body.userName,
+                    userName: query.pepito,
                     password: await bcrypt.hash(body.password, 10),
                     email: body.email,
                     address: body.address,
