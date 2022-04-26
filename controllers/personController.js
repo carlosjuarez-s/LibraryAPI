@@ -1,87 +1,109 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+require('dotenv').config({path: './security.env'})
 
 const personController = Person => {
     const getPersons = (async (req, res) => {
-        const { query } = req;
-        const response = await Person.find(query);
+        const persons = await Person.find();
 
-        res.json(response);
+        if(persons) {
+            res.json({message: "Found", persons: persons})
+        } else {
+            res.json({message: "No person is registered"})
+        }
     })
 
     const postPerson = (async (req, res) => {
-        var response;
-        const person = new Person(req.body);
+        const { body } = req
 
-        person.password = await bcrypt.hash(person.password, 10);
-
-        await person.save();
-        response = {message: 'Created person', person}
-        res.json(response);
+        if(await Person.findOne({username: body.username})) {
+            res.status(400).json({message: "This user already exist"})
+        } else {
+            const person = new Person(body);
+            person.password = await bcrypt.hash(person.password, 10);
+            await person.save();
+            response = {message: 'Created person', person}
+            res.status(200).json(response);
+        }
     })
 
     const getPerson = (async (req, res) => {
-        var response;
-
+        var person;
         const { query } = req;
-        const person = await Person.find(query);
 
-        if(Object.keys(person).length === 0) response = {message: 'Person not found'}
-        else response = {message: 'Found Person', person};
-
-        res.json(response);
+        try {
+            person = await Person.find(query);
+        } catch(err) {
+            res.status(400).json({error: "'Person not found'"})
+        }
+        
+        if(Object.keys(person).length === 0 || !person) {
+            response = {message: 'Person not found'}
+            res.status(200).json(response)
+        }
+        else {
+            response = {message: 'Found Person', person};
+            res.json(response);
+        }
+        
     })
 
     const putPerson = (async (req, res) => {
         const { body, query } = req;
-        const person = await Person.updateOne(
-            {
-                _id: req.params.personId
-            },
-            {
-                $set: {
-                    firstName: body.firstName,
-                    lastName: body.lastName,
-                    userName: query.pepito,
-                    password: await bcrypt.hash(body.password, 10),
-                    email: body.email,
-                    address: body.address,
-                    phone: body.phone
-                }
-            }
-        )
         
-
-        res.send("Person update");
+        try {
+            await Person.updateOne(
+                {
+                    _id: req.params.personId
+                },
+                {
+                    $set: {
+                        firstName: body.firstName,
+                        lastName: body.lastName,
+                        userName: query.pepito,
+                        password: await bcrypt.hash(body.password, 10),
+                        email: body.email,
+                        address: body.address,
+                        phone: body.phone
+                    }
+                }
+            )
+        } catch(err) {
+            res.status(400).json({error: "This person no exist"})
+        }
+        
+        res.json({message: "Person update"});
     })
 
     const deletePerson = (async (req, res) => {
         const { params } = req;
-        const person = await Person.findById(params.personId);
-        await Person.deleteOne(person);
-
-        res.send("Deleted person");
+    
+        try {
+            const person = await Person.findById(req.params.personId);
+            await Person.deleteOne(person);
+            if(person) {
+                res.json({message: "Deleted person"})
+            } else {
+                res.json({message: "This person no exist"})
+            }
+        } catch(err) {
+            res.status(400).json({error: "error"})
+        }
     })
 
     const postLogin = (async (req, res) => {
         const { body } = req;
-        var response;
 
-        const person = await Person.findOne(
-            {
-                "userName": body.userName
-            }
-        )
+        const person = await Person.findOne({"username": body.userName})
 
-        if(await bcrypt.compare(body.password, person.password)) {
+        if(!person) {
+            res.status(400).json({message: "This user no exist!"})
+        } else if(await bcrypt.compare(body.password, person.password)) {
             const token = generatedToken(person);
-
-            response = {message: "ok", token}
+            res.json({message: "Successful login", token} )
         } else {
-            response = {message: "Invalid Credentials"};
+            res.status(400).json({message: "Invalid Credentials"})
         }
-
-        res.json(response);
     })
 
     const generatedToken = Person => {
@@ -90,7 +112,7 @@ const personController = Person => {
             lastName: Person.lastName
         }
 
-        return jwt.sign(payLod, 'aaa')
+        return jwt.sign(payLod, process.env.SECRET)
     }
 
     const getLoginValidate = async (req, res) => {
@@ -99,13 +121,13 @@ const personController = Person => {
         var response;
 
         try {
-            var decoded = jwt.verify(token, 'aaa');
+            var decoded = jwt.verify(token, process.env.SECRET);
             response = {message: "Successful verification", token: decoded};
+            res.json(response);
         }catch(e) {
             response = {error: e};
-        }
-
-        res.json(response);
+            res.status(400).json(response)
+        }   
     }
 
     return { getPersons, postPerson, getPerson, putPerson, deletePerson, postLogin, getLoginValidate };

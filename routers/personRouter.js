@@ -1,7 +1,5 @@
 const express = require('express');
 const personController = require('../controllers/personController');
-
-
 const validator = require('express-joi-validation').createValidator();
 const personValidation = require('../validations/personsValidations');
 
@@ -21,7 +19,7 @@ const routes = Person => {
 
     personRouter
         .route('/persons/:personId')
-        .put(putPerson)
+        .put(validator.body(personValidation), putPerson)
         .delete(deletePerson)
 
     personRouter
